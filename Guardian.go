@@ -19,7 +19,7 @@ type Record struct {
 }
 
 func main() {
-	xlsxFile := xlsx.New()
+	//xlsxFile := xlsx.New()
 	xlsxFile, err := xlsx.Open("data.xlsx")
 	if err != nil {
 		log.Fatal("Cant open *.xlsx file ", err)
@@ -53,22 +53,31 @@ func main() {
 	}
 	defer outFile.Close()
 	outString := ""
+	orderPrice := 0
 	for idx, position := range positionsInOrder {
 		positionHours, positionPrice := positionAttributes(position)
-		outString = fmt.Sprintf("%d. %s\n%s\n", idx+1, position.Position, position.Description)
+		orderPrice += positionPrice
+		outString += fmt.Sprintf("%d. %s\n%s\n", idx+1, position.Position, position.Description)
 		outString += fmt.Sprintf("%d шт., %0.1f ч., %d руб. с учётом НДС 20%% \n\n", position.Quantity, positionHours, positionPrice)
 	}
+	remoteOrderPrice := 0
+	visitOrderPrice := 0.
+	if orderTime < 240 {
+		remoteOrderPrice = 240 * 60 * 1.2
+	} else {
+		remoteOrderPrice = orderPrice
+	}
+	if orderPrice < 480 {
+		visitOrderPrice = 480. * 60. * 1.1
+	} else {
+		visitOrderPrice = float64(remoteOrderPrice) * 1.1
+	}
 
-	// 	workHours, positionPrice := orderPositionAttributes(record, quantity)
-	//
-	// 	outString += fmt.Sprintf("%d шт., %0.1f ч., %d руб. с учётом НДС 20%% \n\n", quantity, workHours, positionPrice)
-	// 	outFileWrite(outFile, outString)
+	orderDays := math.Round(float64(orderTime)/60./8.*10.) / 10.
 
-	// 	outString = ""
-	// 	number += 1
-	// 	orderTime += record.Price * quantity
-	// 	orderPrice += positionPrice
-	//
+	outString += fmt.Sprintf("ИТОГО:\nУдалённо - %d руб.  с учётом НДС 20%%\nВыезд - %.0f руб. с учётом НДС 20%%. Без учёта трансфера и проживания %0.1f дня.\nПри изменении технического задания, сумма ПНР может быть изменена в большую или меньшую сторону.\n", remoteOrderPrice, visitOrderPrice, orderDays)
+	fmt.Println(outString)
+	outFileWrite(outFile, outString)
 }
 
 func outFileWrite(outFile *os.File, outString string) {
@@ -80,6 +89,6 @@ func outFileWrite(outFile *os.File, outString string) {
 
 func positionAttributes(position Record) (float64, int) {
 	positionHours := math.Round(float64(position.Time)/60.*10.) / 10
-	positionPrice := int(position.Time * float64(position.Quantity) * 60. * 1.2)
+	positionPrice := int(position.Time * 60. * 1.2)
 	return positionHours, positionPrice
 }
