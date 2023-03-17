@@ -67,8 +67,9 @@ func main() {
 	} else {
 		remoteOrderPrice = orderPrice
 	}
-	if orderPrice < 480 {
-		visitOrderPrice = 480. * 60. * 1.1
+
+	if orderTime < 480 {
+		visitOrderPrice = 480. * 60. * 1.1 * 1.2
 	} else {
 		visitOrderPrice = float64(remoteOrderPrice) * 1.1
 	}
