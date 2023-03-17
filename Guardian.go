@@ -53,19 +53,35 @@ func main() {
 	}
 	defer outFile.Close()
 	outString := ""
-	orderPrice := 0
 	for idx, position := range positionsInOrder {
 		positionHours, positionPrice := positionAttributes(position)
-		orderPrice += positionPrice
 		outString += fmt.Sprintf("%d. %s\n%s\n", idx+1, position.Position, position.Description)
 		outString += fmt.Sprintf("%d шт., %0.1f ч., %d руб. с учётом НДС 20%% \n\n", position.Quantity, positionHours, positionPrice)
 	}
+	remoteOrderPrice, visitOrderPrice := totalCalculation(orderTime)
+
+	orderDays := totalTime(orderTime)
+
+	outString += fmt.Sprintf("ИТОГО:\nУдалённо - %d руб.  с учётом НДС 20%%\nВыезд - %.0f руб. с учётом НДС 20%%. Без учёта трансфера и проживания %0.1f дня.\nПри изменении технического задания, сумма ПНР может быть изменена в большую или меньшую сторону.\n", remoteOrderPrice, visitOrderPrice, orderDays)
+	fmt.Println(outString)
+	outFileWrite(outFile, outString)
+}
+
+func totalTime(orderTime int) float64 {
+	orderDays := math.Round(float64(orderTime)/60./8.*10.) / 10.
+	if orderDays<1{
+		orderDays=1.
+	}
+	return orderDays
+}
+
+func totalCalculation(orderTime int) (int, float64) {
 	remoteOrderPrice := 0
 	visitOrderPrice := 0.
 	if orderTime < 240 {
 		remoteOrderPrice = 240 * 60 * 1.2
 	} else {
-		remoteOrderPrice = orderPrice
+		remoteOrderPrice = orderTime * 6 * 12
 	}
 
 	if orderTime < 480 {
@@ -73,12 +89,7 @@ func main() {
 	} else {
 		visitOrderPrice = float64(remoteOrderPrice) * 1.1
 	}
-
-	orderDays := math.Round(float64(orderTime)/60./8.*10.) / 10.
-
-	outString += fmt.Sprintf("ИТОГО:\nУдалённо - %d руб.  с учётом НДС 20%%\nВыезд - %.0f руб. с учётом НДС 20%%. Без учёта трансфера и проживания %0.1f дня.\nПри изменении технического задания, сумма ПНР может быть изменена в большую или меньшую сторону.\n", remoteOrderPrice, visitOrderPrice, orderDays)
-	fmt.Println(outString)
-	outFileWrite(outFile, outString)
+	return remoteOrderPrice, visitOrderPrice
 }
 
 func outFileWrite(outFile *os.File, outString string) {
