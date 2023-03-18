@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -23,10 +24,12 @@ type Record struct {
 	Description string
 }
 
+var versionNumber = "3.01"
+
 func main() {
 
 	a := app.New()
-	w := a.NewWindow("Калькулятор сметы by Peretz489@gmail.com")
+	w := a.NewWindow("Калькулятор сметы v" + versionNumber + " by peretz489@gmail.com")
 	w.Resize(fyne.NewSize(800, 400))
 	w.SetFixedSize(true)
 	icon, _ := fyne.LoadResourceFromPath("icon.ico")
@@ -43,8 +46,9 @@ func main() {
 		dialog.ShowFileOpen(func(r fyne.URIReadCloser, err error) {
 			fileData = fmt.Sprint(r.URI())
 			fileData = fileData[7:]
-			entry.SetText(calculate(r))
-			w.SetTitle("Калькулятор сметы by Peretz489@gmail.com: выбран файл " + fileData)
+			fileAttribs := strings.Split(fileData, "/")
+			w.SetTitle("Калькулятор сметы " + versionNumber + " by peretz489@gmail.com: выбран файл " + fileAttribs[len(fileAttribs)-1])
+			entry.SetText(calculate(fileData))
 		}, w)
 	})
 	btnFileOpen.Resize(fyne.NewSize(150, 40))
@@ -66,13 +70,10 @@ func main() {
 
 }
 
-func calculate(fileReader interface{}) string {
-	if fileReader == nil {
-		return "Не указан файл"
-	}
-	xlsxError:=errors.New("Ошибка открытия файла с прайс-листом или некорректный формат прайса")
-	xlsxFile, err := xlsx.Open(fileReader)
-	if err != nil {
+func calculate(file string) string {
+	xlsxError := errors.New("ошибка открытия файла с прайс-листом или некорректный формат прайса")
+	xlsxFile, err := xlsx.Open(file)
+	if err != nil || !strings.Contains(file, ".xlsx") {
 		return xlsxError.Error()
 	}
 	defer xlsxFile.Close()
@@ -84,7 +85,7 @@ func calculate(fileReader interface{}) string {
 	description := sheet.Col(5).Values()
 	positionsInOrder := make([]Record, 0)
 	orderTime := 0
-	if len(positions)==0||len(prices)==0||len(quantity)==0||len(time)==0||len(description)==0{
+	if len(positions) == 0 || len(prices) == 0 || len(quantity) == 0 || len(time) == 0 || len(description) == 0 {
 		return xlsxError.Error()
 	}
 	for idx := range positions {
