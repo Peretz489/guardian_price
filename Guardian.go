@@ -1,11 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math"
-	"os"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -27,7 +26,7 @@ type Record struct {
 func main() {
 
 	a := app.New()
-	w := a.NewWindow("Калькулятор сметы")
+	w := a.NewWindow("Калькулятор сметы by Peretz489@gmail.com")
 	w.Resize(fyne.NewSize(800, 400))
 	w.SetFixedSize(true)
 	icon, _ := fyne.LoadResourceFromPath("icon.ico")
@@ -45,7 +44,7 @@ func main() {
 			fileData = fmt.Sprint(r.URI())
 			fileData = fileData[7:]
 			entry.SetText(calculate(r))
-			w.SetTitle("Калькулятор сметы: выбран файл " + fileData)
+			w.SetTitle("Калькулятор сметы by Peretz489@gmail.com: выбран файл " + fileData)
 		}, w)
 	})
 	btnFileOpen.Resize(fyne.NewSize(150, 40))
@@ -71,9 +70,10 @@ func calculate(fileReader interface{}) string {
 	if fileReader == nil {
 		return "Не указан файл"
 	}
+	xlsxError:=errors.New("Ошибка открытия файла с прайс-листом или некорректный формат прайса")
 	xlsxFile, err := xlsx.Open(fileReader)
 	if err != nil {
-		log.Fatal("Cant open *.xlsx file ", err)
+		return xlsxError.Error()
 	}
 	defer xlsxFile.Close()
 	sheet := xlsxFile.Sheet(0)
@@ -84,6 +84,9 @@ func calculate(fileReader interface{}) string {
 	description := sheet.Col(5).Values()
 	positionsInOrder := make([]Record, 0)
 	orderTime := 0
+	if len(positions)==0||len(prices)==0||len(quantity)==0||len(time)==0||len(description)==0{
+		return xlsxError.Error()
+	}
 	for idx := range positions {
 		positionTime, err := strconv.Atoi(time[idx])
 		if err != nil || positionTime == 0 || prices[idx] == "" {
@@ -98,11 +101,6 @@ func calculate(fileReader interface{}) string {
 			orderTime += positionTime
 		}
 	}
-	outFile, err := os.Create("out.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer outFile.Close()
 	outString := ""
 	for idx, position := range positionsInOrder {
 		positionHours, positionPrice := positionAttributes(position)
@@ -114,7 +112,6 @@ func calculate(fileReader interface{}) string {
 	orderDays := totalTime(orderTime)
 
 	outString += fmt.Sprintf("ИТОГО:\nУдалённо - %d руб.  с учётом НДС 20%%\nВыезд - %.0f руб. с учётом НДС 20%%. Без учёта трансфера и проживания %0.1f дня.\nПри изменении технического задания, сумма ПНР может быть изменена в большую или меньшую сторону.\n", remoteOrderPrice, visitOrderPrice, orderDays)
-	outFileWrite(outFile, outString)
 	return outString
 }
 
@@ -141,13 +138,6 @@ func totalCalculation(orderTime int) (int, float64) {
 		visitOrderPrice = float64(remoteOrderPrice) * 1.1
 	}
 	return remoteOrderPrice, visitOrderPrice
-}
-
-func outFileWrite(outFile *os.File, outString string) {
-	_, err := io.WriteString(outFile, outString)
-	if err != nil {
-		log.Fatal("Не могу записать данные: ", err)
-	}
 }
 
 func positionAttributes(position Record) (float64, int) {
