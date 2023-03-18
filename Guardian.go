@@ -8,6 +8,12 @@ import (
 	"os"
 	"strconv"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
+
 	"github.com/plandem/xlsx"
 )
 
@@ -19,8 +25,53 @@ type Record struct {
 }
 
 func main() {
-	//xlsxFile := xlsx.New()
-	xlsxFile, err := xlsx.Open("data.xlsx")
+
+	a := app.New()
+	w := a.NewWindow("Калькулятор сметы")
+	w.Resize(fyne.NewSize(800, 400))
+	w.SetFixedSize(true)
+	icon, _ := fyne.LoadResourceFromPath("icon.ico")
+	w.SetIcon(icon)
+
+	entry := widget.NewMultiLineEntry()
+	entry.Resize(fyne.NewSize(780, 300))
+	entry.Move(fyne.NewPos(5, 5))
+	entry.SetPlaceHolder("Тут будет расчёт")
+
+	var fileData string
+
+	btnFileOpen := widget.NewButton("Выбрать файл", func() {
+		dialog.ShowFileOpen(func(r fyne.URIReadCloser, err error) {
+			fileData = fmt.Sprint(r.URI())
+			fileData = fileData[7:]
+			entry.SetText(calculate(r))
+			w.SetTitle("Калькулятор сметы: выбран файл " + fileData)
+		}, w)
+	})
+	btnFileOpen.Resize(fyne.NewSize(150, 40))
+	btnFileOpen.Move(fyne.NewPos(150, 330))
+
+	btnCalculate := widget.NewButton("Рассчитать", func() {
+		if fileData != "" {
+			entry.SetText(calculate(fileData))
+		}
+	})
+	btnCalculate.Resize(fyne.NewSize(150, 40))
+	btnCalculate.Move(fyne.NewPos(480, 330))
+
+	content := container.NewWithoutLayout(entry, btnFileOpen, btnCalculate)
+
+	w.SetContent(content)
+
+	w.ShowAndRun()
+
+}
+
+func calculate(fileReader interface{}) string {
+	if fileReader == nil {
+		return "Не указан файл"
+	}
+	xlsxFile, err := xlsx.Open(fileReader)
 	if err != nil {
 		log.Fatal("Cant open *.xlsx file ", err)
 	}
@@ -63,14 +114,14 @@ func main() {
 	orderDays := totalTime(orderTime)
 
 	outString += fmt.Sprintf("ИТОГО:\nУдалённо - %d руб.  с учётом НДС 20%%\nВыезд - %.0f руб. с учётом НДС 20%%. Без учёта трансфера и проживания %0.1f дня.\nПри изменении технического задания, сумма ПНР может быть изменена в большую или меньшую сторону.\n", remoteOrderPrice, visitOrderPrice, orderDays)
-	fmt.Println(outString)
 	outFileWrite(outFile, outString)
+	return outString
 }
 
 func totalTime(orderTime int) float64 {
 	orderDays := math.Round(float64(orderTime)/60./8.*10.) / 10.
-	if orderDays<1{
-		orderDays=1.
+	if orderDays < 1 {
+		orderDays = 1.
 	}
 	return orderDays
 }
