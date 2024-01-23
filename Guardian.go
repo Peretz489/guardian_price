@@ -24,7 +24,7 @@ type Record struct {
 	Description string
 }
 
-var versionNumber = "3.01"
+var versionNumber = "3.02"
 
 func main() {
 
@@ -82,7 +82,7 @@ func calculate(file string) string {
 	prices := sheet.Col(2).Values()
 	quantity := sheet.Col(3).Values()
 	time := sheet.Col(4).Values()
-	description := sheet.Col(5).Values()
+	description := sheet.Col(6).Values()
 	positionsInOrder := make([]Record, 0)
 	orderTime := 0
 	if len(positions) == 0 || len(prices) == 0 || len(quantity) == 0 || len(time) == 0 || len(description) == 0 {
