@@ -132,7 +132,6 @@ func totalCalculation(orderTime int) (int, float64) {
 	const remoteOrder = 1.3
 	const ndsCoeff = 1.2
 	const oneMinutePrice = 60;
-	const longOrder = 1.1
 	if orderTime < minimumOrderTime {
 		remoteOrderPrice = minimumOrderTime * oneMinutePrice * ndsCoeff
 	} else {
@@ -142,7 +141,7 @@ func totalCalculation(orderTime int) (int, float64) {
 	if orderTime < oneDay {
 		visitOrderPrice = oneDay * float64(oneMinutePrice) * remoteOrder * ndsCoeff
 	} else {
-		visitOrderPrice = float64(remoteOrderPrice) * longOrder
+		visitOrderPrice = float64(remoteOrderPrice) * remoteOrder
 	}
 	return remoteOrderPrice, visitOrderPrice
 }
