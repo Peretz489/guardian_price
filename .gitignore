@@ -1,0 +1,7 @@
+*.xlsx
+*.txt
+*.json
+*.exe
+*.zip
+/Calc
+/.vscode
