@@ -81,7 +81,7 @@ func calculate(file string) string {
 	positions := sheet.Col(0).Values()
 	prices := sheet.Col(2).Values()
 	quantity := sheet.Col(3).Values()
-	time := sheet.Col(4).Values()
+	time := sheet.Col(5).Values()
 	description := sheet.Col(6).Values()
 	positionsInOrder := make([]Record, 0)
 	orderTime := 0
@@ -135,7 +135,7 @@ func totalCalculation(orderTime int) (int, float64) {
 	if orderTime < minimumOrderTime {
 		remoteOrderPrice = minimumOrderTime * oneMinutePrice * ndsCoeff
 	} else {
-		remoteOrderPrice = orderTime * oneMinutePrice/10 * int(ndsCoeff*10) // divide and multiply by 10 to return int value
+		remoteOrderPrice = orderTime * oneMinutePrice/10 * int(ndsCoeff*10) // divide and multiply by 10 to keep int value
 	}
 
 	if orderTime < oneDay {
