@@ -24,7 +24,7 @@ type Record struct {
 	Description string
 }
 
-var versionNumber = "3.02"
+var versionNumber = "3.03"
 
 func main() {
 
